@@ -42,9 +42,9 @@ public class Test_Duplicate : MonoBehaviour
             Debug.Log("Editor Selected Root Folder:" + path);
 
             GetAllAsset(path);
-            AssetDatabase.CreateFolder("Assets","Assets/Duplicated_Test");
-            AssetDatabase.CopyAsset(path, "Assets/Duplicated_Test");
-            AssetDatabase.Refresh();
+          //  AssetDatabase.CreateFolder("Assets","Assets/Duplicated_Test");
+         //   AssetDatabase.CopyAsset(path, "Assets/Duplicated_Test");
+         //   AssetDatabase.Refresh();
         }
         else
         {
@@ -56,27 +56,47 @@ public class Test_Duplicate : MonoBehaviour
     private static void GetAllAsset(string a_strAssetRootLocation)
     {
         var assetsAtLocation = AssetDatabase.FindAssets("",new string[] { a_strAssetRootLocation });
+        Dictionary<string, string> dicMap = new Dictionary<string, string>();
         if (assetsAtLocation != null && assetsAtLocation.Length > 0)
         {
             foreach (var assetPAthFromGuid in assetsAtLocation)
             {
                 var actualAssetPath = AssetDatabase.GUIDToAssetPath(assetPAthFromGuid);
-                Debug.Log("Asset Path:--->"+ actualAssetPath);
+                var strType = AssetDatabase.GetMainAssetTypeAtPath(actualAssetPath);
+                
+                Debug.Log("Current Asset Path:--->"+ actualAssetPath + "," + strType);
+
+                if (strType.ToString() == "UnityEditor.DefaultAsset")
+                {
+                    Debug.Log("Skipping as it;s a folder...");
+                    continue;
+                    
+                }
                 //TODO: what is fileid type of class id where it is 
                  var depencies = AssetDatabase.GetDependencies(actualAssetPath,false);
 
+             
+            
                 if (depencies != null && depencies.Length > 0)
                 {
                     foreach (var depPath in depencies)
                     {
-                        Debug.Log("Depencies:->" + depPath);
+                     
                         if (Editor_CheckInRoot(a_strAssetRootLocation, depPath) == true)
                         {
                             Debug.Log("Present in Root Depencies:->" + depPath);
+                            var tempGuid = AssetDatabase.GUIDFromAssetPath(depPath).ToString();
+                            if ( dicMap.ContainsKey(tempGuid) == false )
+                            {
+                                dicMap.Add(tempGuid, depPath);
+                            }
+
+                        
                         }
                         else
                         {
-                           // Debug.Log("Not Present in root Depencies:->" + depPath);
+                            Debug.Log("Not Present in root Depencies:->" + depPath);
+                            return;
                         }
                         
                     }
@@ -91,6 +111,12 @@ public class Test_Duplicate : MonoBehaviour
         {
             Debug.LogError("No asset found in sub folder:"+ a_strAssetRootLocation);
         }
+
+        foreach (KeyValuePair<string , string> kv in dicMap)
+        {
+            Debug.Log(kv.Key+","+kv.Value);
+        }
+
        //skip dep in other folders than assets !
         //Create folder
         //Track guid vs depencies list
