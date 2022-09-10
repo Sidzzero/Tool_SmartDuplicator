@@ -133,7 +133,8 @@ public class Test_Duplicate : MonoBehaviour
                 Debug.LogFormat("---->Dep Asset:{0}", data);
             }
         }
-
+        Editor_ReplaceMetaFile("", "", "");
+        Editor_CreateDuplicateFolder(a_strAssetRootLocation);
         //TODO logic
         //skip dep in other folders than assets !
         //Create folder
@@ -145,11 +146,26 @@ public class Test_Duplicate : MonoBehaviour
         //run same open .meta file and update guid
     }
 
-    private void Editor_ReplaceMetaFile(string str_OldGuid , string str_NewGuid , string str_AssetPath)
+
+    private static void Editor_ReplaceMetaFile(string str_OldGuid , string str_NewGuid , string str_AssetPath)
     {
-        string text = System.IO.File.ReadAllText(str_AssetPath);
+        string text = System.IO.File.ReadAllText("D:\\Projects\\Unity\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Assets\\Character\\Materials\\Mat_Test.mat");
         Debug.Log("Content:"+text);
         //save as depen asset and its depenices and path
+    }
+    private static void Editor_CreateDuplicateFolder(string a_strRootPath)
+    {
+
+        try
+        {
+            AssetDatabase.CopyAsset(a_strRootPath, a_strRootPath+"_01");
+            AssetDatabase.Refresh();
+        }
+        catch (System.Exception exp)
+        {
+
+            Debug.LogError("[Error]Editor_CreateDuplicateFolder->"+exp.Message);
+        }
     }
 
     private static bool Editor_CheckInRoot(string a_strRootDir , string a_StrFilePath)
