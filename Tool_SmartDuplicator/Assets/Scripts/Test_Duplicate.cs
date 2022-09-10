@@ -134,7 +134,16 @@ public class Test_Duplicate : MonoBehaviour
             }
         }
         Editor_ReplaceMetaFile("", "", "");
-        Editor_CreateDuplicateFolder(a_strAssetRootLocation);
+        string strNewLocation = a_strAssetRootLocation + "_01";
+        try
+        {
+            Editor_CreateDuplicateFolder(a_strAssetRootLocation, strNewLocation);
+            Editor_ReReferenceAsset(a_strAssetRootLocation, strNewLocation, dicAllDepencies, dicMainAsset);
+        }
+        catch (System.Exception exp)
+        {
+            Debug.LogError("[Error]GetAllAsset->" + exp.Message);
+        }
         //TODO logic
         //skip dep in other folders than assets !
         //Create folder
@@ -149,16 +158,16 @@ public class Test_Duplicate : MonoBehaviour
 
     private static void Editor_ReplaceMetaFile(string str_OldGuid , string str_NewGuid , string str_AssetPath)
     {
-        string text = System.IO.File.ReadAllText("D:\\Projects\\Unity\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Assets\\Character\\Materials\\Mat_Test.mat");
-        Debug.Log("Content:"+text);
+       // string text = System.IO.File.ReadAllText("D:\\Projects\\Unity\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Assets\\Character\\Materials\\Mat_Test.mat");
+        string pathToAsset = System.IO.File.ReadAllText(str_AssetPath);
+        Debug.Log("Replace Content:"+ pathToAsset);
         //save as depen asset and its depenices and path
     }
-    private static void Editor_CreateDuplicateFolder(string a_strRootPath)
+    private static void Editor_CreateDuplicateFolder(string a_strRootPath,string a_strNewLocation)
     {
-
         try
         {
-            AssetDatabase.CopyAsset(a_strRootPath, a_strRootPath+"_01");
+            AssetDatabase.CopyAsset(a_strRootPath, a_strNewLocation);
             AssetDatabase.Refresh();
         }
         catch (System.Exception exp)
@@ -168,6 +177,46 @@ public class Test_Duplicate : MonoBehaviour
         }
     }
 
+
+    private static void Editor_ReReferenceAsset(
+          string _a_strOldLocation,
+          string a_strNewLocationRoot,
+          Dictionary<string, string> a_AllDep, 
+          Dictionary<string, List<string>> a_MainAsset)
+    {
+        try
+        {
+            foreach (KeyValuePair<string, List<string>> kv in a_MainAsset)
+            {
+                foreach (var depGuid in kv.Value)
+                {
+                    if (a_AllDep.ContainsKey(depGuid) == false)
+                    {
+                        throw new System.Exception("Missing this GUID in all dep dic:"+ depGuid);
+                    }
+                    var depNewLocation = a_AllDep[depGuid].Replace(_a_strOldLocation, a_strNewLocationRoot);
+                    var depNewGUID = AssetDatabase.AssetPathToGUID(depNewLocation);
+                    if (string.IsNullOrEmpty(depNewGUID))
+                    {
+                        throw new System.Exception("NO valid guid found for this DEP asset at path:" + depNewLocation);
+                    }
+                    var mainAssetPath = kv.Key;
+                    var mainAssetNewPath = mainAssetPath.Replace(_a_strOldLocation, a_strNewLocationRoot);
+                    var mainNewGUId = AssetDatabase.AssetPathToGUID(mainAssetNewPath);
+                    if (string.IsNullOrEmpty(mainNewGUId))
+                    {
+                        throw new System.Exception("NO valid guid found for this MAIN asset at path:" + mainAssetNewPath);
+                    }
+
+                    Editor_ReplaceMetaFile(depGuid, depNewGUID, mainAssetNewPath);
+                }
+            }
+        }
+        catch (System.Exception exp)
+        { 
+
+        }
+    }
     private static bool Editor_CheckInRoot(string a_strRootDir , string a_StrFilePath)
     {
        return a_StrFilePath.Contains(a_strRootDir);
