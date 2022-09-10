@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Reflection;
+using UnityEngine.Windows;
+using UnityEngine.UIElements;
 
 public class Test_Duplicate : MonoBehaviour
 {
@@ -56,7 +58,8 @@ public class Test_Duplicate : MonoBehaviour
     private static void GetAllAsset(string a_strAssetRootLocation)
     {
         var assetsAtLocation = AssetDatabase.FindAssets("",new string[] { a_strAssetRootLocation });
-        Dictionary<string, string> dicMap = new Dictionary<string, string>();
+        Dictionary<string, string> dicAllDepencies = new Dictionary<string, string>();
+        Dictionary<string, List<string>> dicMainAsset = new Dictionary<string, List< string> >();
         if (assetsAtLocation != null && assetsAtLocation.Length > 0)
         {
             foreach (var assetPAthFromGuid in assetsAtLocation)
@@ -79,6 +82,11 @@ public class Test_Duplicate : MonoBehaviour
             
                 if (depencies != null && depencies.Length > 0)
                 {
+                    if (dicMainAsset.ContainsKey(actualAssetPath) ==false)
+                    {
+                        dicMainAsset.Add(actualAssetPath,new List<string>());
+                    }
+
                     foreach (var depPath in depencies)
                     {
                      
@@ -86,12 +94,13 @@ public class Test_Duplicate : MonoBehaviour
                         {
                             Debug.Log("Present in Root Depencies:->" + depPath);
                             var tempGuid = AssetDatabase.GUIDFromAssetPath(depPath).ToString();
-                            if ( dicMap.ContainsKey(tempGuid) == false )
+                            if ( dicAllDepencies.ContainsKey(tempGuid) == false )
                             {
-                                dicMap.Add(tempGuid, depPath);
+                                dicAllDepencies.Add(tempGuid, depPath);
                             }
+                            dicMainAsset[actualAssetPath].Add(tempGuid);
 
-                        
+
                         }
                         else
                         {
@@ -112,12 +121,21 @@ public class Test_Duplicate : MonoBehaviour
             Debug.LogError("No asset found in sub folder:"+ a_strAssetRootLocation);
         }
 
-        foreach (KeyValuePair<string , string> kv in dicMap)
+        foreach (KeyValuePair<string , string> kv in dicAllDepencies)
         {
             Debug.Log(kv.Key+","+kv.Value);
         }
+        foreach (KeyValuePair< string, List<string>> kv in dicMainAsset)
+        {
+            Debug.LogFormat("Main Asset:{0}",kv.Key);
+            foreach (var data in kv.Value)
+            {
+                Debug.LogFormat("---->Dep Asset:{0}", data);
+            }
+        }
 
-       //skip dep in other folders than assets !
+        //TODO logic
+        //skip dep in other folders than assets !
         //Create folder
         //Track guid vs depencies list
         //after folder duplicate
@@ -125,6 +143,13 @@ public class Test_Duplicate : MonoBehaviour
         //search asset dependent files in new folder and get path(assume same root)
         //get new guid map old to new
         //run same open .meta file and update guid
+    }
+
+    private void Editor_ReplaceMetaFile(string str_OldGuid , string str_NewGuid , string str_AssetPath)
+    {
+        string text = System.IO.File.ReadAllText(str_AssetPath);
+        Debug.Log("Content:"+text);
+        //save as depen asset and its depenices and path
     }
 
     private static bool Editor_CheckInRoot(string a_strRootDir , string a_StrFilePath)
