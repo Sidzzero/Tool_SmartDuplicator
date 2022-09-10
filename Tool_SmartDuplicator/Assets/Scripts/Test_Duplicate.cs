@@ -159,8 +159,25 @@ public class Test_Duplicate : MonoBehaviour
     private static void Editor_ReplaceMetaFile(string str_OldGuid , string str_NewGuid , string str_AssetPath)
     {
        // string text = System.IO.File.ReadAllText("D:\\Projects\\Unity\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Assets\\Character\\Materials\\Mat_Test.mat");
-        string pathToAsset = System.IO.File.ReadAllText(str_AssetPath);
-        Debug.LogFormat("Replace {0} with {1} in file: \n {2}:", str_OldGuid, str_NewGuid, pathToAsset);
+        string assetTextFile = System.IO.File.ReadAllText(str_AssetPath);
+        Debug.LogFormat("Replace {0} with {1} in file {2}: \n {3}:", str_OldGuid, str_NewGuid, str_AssetPath, assetTextFile);
+        try
+        {
+ 
+
+            assetTextFile = assetTextFile.Replace(str_OldGuid, str_NewGuid);
+            Debug.Log(assetTextFile);
+            System.IO.File.WriteAllText(str_AssetPath, assetTextFile);
+
+ 
+      
+        }
+        catch (System.Exception exp)
+        {
+            AssetDatabase.StopAssetEditing();
+            Debug.LogError("[Error]Editor_ReplaceMetaFile->" + exp.Message);
+        }
+        
         //save as depen asset and its depenices and path
     }
     private static void Editor_CreateDuplicateFolder(string a_strRootPath,string a_strNewLocation)
@@ -186,6 +203,7 @@ public class Test_Duplicate : MonoBehaviour
     {
         try
         {
+            AssetDatabase.StartAssetEditing();
             foreach (KeyValuePair<string, List<string>> kv in a_MainAsset)
             {
                 foreach (var depGuid in kv.Value)
@@ -211,10 +229,16 @@ public class Test_Duplicate : MonoBehaviour
                     Editor_ReplaceMetaFile(depGuid, depNewGUID, mainAssetNewPath);
                 }
             }
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
         }
         catch (System.Exception exp)
-        { 
-
+        {
+            AssetDatabase.StopAssetEditing();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.LogError("Editor_ReReferenceAsset:" + exp);
         }
     }
     private static bool Editor_CheckInRoot(string a_strRootDir , string a_StrFilePath)
