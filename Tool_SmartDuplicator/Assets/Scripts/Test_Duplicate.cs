@@ -133,8 +133,8 @@ public class Test_Duplicate : MonoBehaviour
                 Debug.LogFormat("---->Dep Asset:{0}", data);
             }
         }
-        Editor_ReplaceMetaFile("", "", "");
-        string strNewLocation = a_strAssetRootLocation + "_01";
+       // Editor_ReplaceMetaFile("", "", "");
+        string strNewLocation = a_strAssetRootLocation + "_Test_01";
         try
         {
             Editor_CreateDuplicateFolder(a_strAssetRootLocation, strNewLocation);
@@ -160,7 +160,7 @@ public class Test_Duplicate : MonoBehaviour
     {
        // string text = System.IO.File.ReadAllText("D:\\Projects\\Unity\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Tool_SmartDuplicator\\Assets\\Character\\Materials\\Mat_Test.mat");
         string pathToAsset = System.IO.File.ReadAllText(str_AssetPath);
-        Debug.Log("Replace Content:"+ pathToAsset);
+        Debug.LogFormat("Replace {0} with {1} in file: \n {2}:", str_OldGuid, str_NewGuid, pathToAsset);
         //save as depen asset and its depenices and path
     }
     private static void Editor_CreateDuplicateFolder(string a_strRootPath,string a_strNewLocation)
